@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 
+require_relative 'display'
+
 TOTAL_AVAILABLE_GUESSES = 7
 
 # hangman's game class
 class Game
-  attr_accessor :tried_letters, :guessed_letters, :guessing_word
+  attr_accessor :tried_letters, :guessed_letters, :guessing_word, :left_guesses
+
+  include Display
 
   def initialize
     @tried_letters = []
@@ -37,6 +41,7 @@ class Game
     error_msg = nil
 
     loop do
+      display_game
       puts prompt_text
       puts "#{error_msg}(#{error_count})" unless error_count.zero?
 
@@ -44,7 +49,9 @@ class Game
 
       error_msg = check_input(input)
 
+      clear_screen
       if error_msg.nil?
+        display_game
         return input
       end
 
