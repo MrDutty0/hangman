@@ -12,10 +12,27 @@ class Game
 
   def initialize
     @tried_letters = []
-    @guessed_letters = []
     @guessing_word = nil
     @left_guesses = TOTAL_AVAILABLE_GUESSES
   end
+
+  def play
+    if prompt_for_loading_game == 'y'
+      # choose_game_to_load
+    else
+      choose_guessing_word
+    end
+
+    loop do
+      input = guess_letter
+
+      process_input(input)
+
+      break if finished_game?
+    end
+  end
+
+  private
 
   def choose_guessing_word
     File.open('words.txt', 'r') do |file|
@@ -26,40 +43,6 @@ class Game
       @guessing_word = available_words.sample
     end
   end
-
-  def play
-    choose_guessing_word
-
-    loop do
-      input = guess_letter
-    end
-  end
-
-  def guess_letter
-    error_count = 0
-    prompt_text = 'Please enter a single letter to guess or "exit" to exit the game'
-    error_msg = nil
-
-    loop do
-      display_game
-      puts prompt_text
-      puts "#{error_msg}(#{error_count})" unless error_count.zero?
-
-      input = gets.chomp.downcase
-
-      error_msg = check_input(input)
-
-      clear_screen
-      if error_msg.nil?
-        display_game
-        return input
-      end
-
-      error_count += 1
-    end
-  end
-
-  private
 
   def check_input(input)
     error_msg = nil
@@ -73,5 +56,14 @@ class Game
     end
 
     error_msg
+  end
+
+  def process_input(input)
+    tried_letters << input
+    @left_guesses -= 1 unless guessing_word.split('').include?(input)
+  end
+
+  def finished_game?
+    left_guesses <= 0 || guessing_word.split('').all? { |letter| tried_letters.include?(letter) }
   end
 end
