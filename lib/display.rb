@@ -3,12 +3,12 @@
 require 'colorize'
 require 'io/console'
 
-ALPHABET = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'].freeze
+ALPHABET = ('A'..'Z').to_a.freeze
 
-# For displaying information for user
+# For displaying information for the user
 module Display
   def display_game
-    formatted_word = guessing_word.split('').map do |letter|
+    formatted_word = guessing_word.chars.map do |letter|
       tried_letters.include?(letter) ? letter.colorize(mode: :underline) : '_'
     end
 
@@ -22,7 +22,7 @@ module Display
   end
 
   def clear_screen
-    puts "\e[2J"
+    system('clear') || system('cls')
   end
 
   def guess_letter
@@ -31,6 +31,7 @@ module Display
     error_msg = nil
 
     loop do
+      clear_screen
       display_game
       puts prompt_text
       puts "#{error_msg}(#{error_count})" unless error_count.zero?
@@ -39,11 +40,7 @@ module Display
 
       error_msg = check_input(input)
 
-      clear_screen
-      if error_msg.nil?
-        display_game
-        return input
-      end
+      return input if error_msg.nil?
 
       error_count += 1
     end
@@ -65,5 +62,52 @@ module Display
       nil
     end
     input
+  end
+
+  def get_file_id(file_stems)
+    no_files = file_stems.length
+    error_no = 0
+
+    input = nil
+    loop do
+      print_saved_files(file_stems, error_no)
+
+      input = gets.chomp
+
+      break if correct_file_id?(input, no_files)
+
+      error_no += 1
+    end
+
+    input.to_i
+  end
+
+  def correct_file_id?(input, no_files)
+    input =~ /^[0-9]+$/ && input.to_i < no_files
+  end
+
+  def print_saved_files(file_names, error_no)
+    clear_screen
+
+    prompt_text = 'Choose the game_id of game you want to load'
+    prompt_text += "(#{error_no})" unless error_no.zero?
+
+    puts prompt_text
+    puts 'id | file name'
+    puts '------------------------'
+    file_names.each_with_index do |file_name, i|
+      puts "#{i}  | #{file_name}"
+    end
+  end
+
+  def winning_text
+    clear_screen
+    puts 'Congratulations, your pal has survived! You are a hero!'
+  end
+
+  def losing_text
+    clear_screen
+    puts 'Unfortunately, you did not manage to save your friend.'
+    puts "The word was #{guessing_word}"
   end
 end
